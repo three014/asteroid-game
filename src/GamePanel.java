@@ -11,6 +11,7 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int UPDATES_PER_SEC = 60;
     static final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
     static final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) / 2);
+    final int SHIP_SPEED = (int)(0.12 * UNIT_SIZE);
     // final int MAX_LASERS = 3;
     static final Point offset = new Point();
     static int xFire = -1;
@@ -21,7 +22,7 @@ public class GamePanel extends JPanel implements ActionListener {
     // int health = 3;
     boolean running = false;
     // laser[] l = new laser[MAX_LASERS]; FIXME: turn into array of lasers when laser class works properly
-    laser l;
+    laser l = null;
     Timer timer;
     Random rand;
 
@@ -67,50 +68,68 @@ public class GamePanel extends JPanel implements ActionListener {
 
         // moving the spaceship part 1
         switch (offset.x) {
-            case -1: shipX = shipX - (int)(0.25 * UNIT_SIZE); break;
-            case 1: shipX = shipX + (int)(0.25 * UNIT_SIZE); break;
+            case -1:
+                shipX = shipX - SHIP_SPEED;
+                break;
+            case 1:
+                shipX = shipX + SHIP_SPEED;
+                break;
         }
         switch (offset.y) {
-            case 1: shipY = shipY - (int)(0.25 * UNIT_SIZE); break;
-            case -1: shipY = shipY + (int)(0.25 * UNIT_SIZE); break;
+            case 1:
+                shipY = shipY - SHIP_SPEED;
+                break;
+            case -1:
+                shipY = shipY + SHIP_SPEED;
+                break;
         }
 
         /* moving the spaceship part 2:
          * checking for diagonal movement to correct for its larger move size
          */
         if (offset.x == 1 && offset.y == 1) {
-            shipY = shipY + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            shipX = shipX - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY + (int) (XY_CORRECTION * SHIP_SPEED);
+            shipX = shipX - (int) (XY_CORRECTION * SHIP_SPEED);
         }
         if (offset.x == -1 && offset.y == -1) {
-            shipY = shipY - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            shipX = shipX + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY - (int) (XY_CORRECTION * SHIP_SPEED);
+            shipX = shipX + (int) (XY_CORRECTION * SHIP_SPEED);
         }
         if (offset.x == -1 && offset.y == 1) {
-            shipY = shipY + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            shipX = shipX + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY + (int) (XY_CORRECTION * SHIP_SPEED);
+            shipX = shipX + (int) (XY_CORRECTION * SHIP_SPEED);
         }
         if (offset.x == 1 && offset.y == -1) {
-            shipY = shipY - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            shipX = shipX - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY - (int) (XY_CORRECTION * SHIP_SPEED);
+            shipX = shipX - (int) (XY_CORRECTION * SHIP_SPEED);
         }
 
+        if (l != null) { l.moveLaser(); }
     }
 
     public void aim() {
         if (MouseControls.inScreen) {
             setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+
+            if (shoot) {
+                l = new laser(shipX, shipY);
+            }
         }
         else {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-
-        if (shoot) {
-            l = new laser();
-        }
     }
 
     public void checkCollisions() {
+
+        // check laser collisions with border
+        if (l != null) {
+            if ( ( l.laserX >= ( SCREEN_WIDTH - l.LASER_SIZE ) ) || ( l.laserX < 0 ) ) {
+                l = null;
+            } else if ( ( l.laserY >= ( SCREEN_HEIGHT - l.LASER_SIZE ) ) || ( l.laserY < 0 ) ) {
+                l = null;
+            }
+        }
 
     }
 
@@ -124,43 +143,68 @@ public class GamePanel extends JPanel implements ActionListener {
             move();
             aim();
             checkCollisions();
-
-            if (l != null) { // FIXME: turn l into array of lasers when laser class is fixed
-                l.moveLaser();
-            }
         }
         repaint();
     }
 
-    public class asteroid {
+    public static class asteroid {
 
     }
 
-    public class laser { // FIXME: laser moves when left side of screen is clicked, and only to the right
-        final int LASER_SIZE = (int)(UNIT_SIZE * 0.25);
+    public static class laser {
+        final int LASER_SIZE = (int) ( UNIT_SIZE * 0.25 );
+        final int LASER_SPEED = (int) ( UNIT_SIZE * 0.3 );
 
-        int laserY, laserX; // vector A
-        int absV; // unit vector of A
+        public int laserY, laserX;
+        private int moveX, moveY;
 
-        laser() {
+        laser(int X, int Y) {
 
             // see if it's okay to shoot a laser in the first place
             if (shoot) {
 
+                int aimX, aimY;
+                //int directionX, directionY;
+                double absV;
+
                 // starting laser coordinates
-                laserX = shipX + (UNIT_SIZE / 2);
-                laserY = shipY + (UNIT_SIZE / 2);
+                laserX = X + ( UNIT_SIZE / 2 );
+                laserY = Y + ( UNIT_SIZE / 2) ;
+                aimX = xFire;
+                aimY = yFire;
 
-                // find laser slope
-                absV = (int)Math.sqrt((xFire * xFire) + (yFire * yFire));
+                // find normalizing factor for unit vector of laser trajectory
+                absV = Math.sqrt( ( ( aimX - X ) * ( aimX - X ) ) + ( ( aimY - Y ) * ( aimY - Y ) ) );
 
-                shoot = false;
+                // find direction for vector
+                /*
+                if ( (aimY - Y) < 0) { directionY = -1; }
+                else if ( (aimY - Y) == 0) { directionY = 0; }
+                else { directionY = 1; }
+
+                if ( (aimX - X) < 0) { directionX = -1; }
+                else if ( (aimX - X) == 0) { directionX = 0; }
+                else { directionX = 1; }
+                 */
+
+                // combine into actual laser beam movement
+                moveX = (int) ( ( (double) ( aimX - X ) / absV ) * LASER_SPEED );
+                moveY = (int) ( ( (double) ( aimY - Y ) / absV ) * LASER_SPEED );
+
+                // Debugging
+                //System.out.println("Normalizing factor: " + absV);
+                //System.out.println("(" + aimX + ", " + aimY + ")");
+                //System.out.println("(" + directionX + ", " + directionY + ")");
             }
+
+            shoot = false;
         }
 
         void moveLaser() {
-            laserX = laserX + ((laserX / absV) * LASER_SIZE);
-            laserY = laserY + ((laserY / absV) * LASER_SIZE);
+            laserX += moveX;
+            laserY += moveY;
+            // laserX += 10;
+            // laserY += 10;
         }
     }
 }
