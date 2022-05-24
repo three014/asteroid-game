@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener {
@@ -10,14 +9,14 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int SCREEN_HEIGHT = 1080;
     static final int UNIT_SIZE = 70;
     static final int UPDATES_PER_SEC = 60;
-    static final float DIAG_CORRECTION = 0.414214f;
+    static final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
     static final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) / 2);
     static final Point offset = new Point();
-    static int xAim, xFire = -1;
-    static int yAim, yFire = -1;
+    static int xFire = -1;
+    static int yFire = -1;
     static boolean shoot = false;
-    int x = (SCREEN_WIDTH - UNIT_SIZE) / 2;
-    int y = (SCREEN_HEIGHT - UNIT_SIZE) / 2;
+    int shipX = (SCREEN_WIDTH - UNIT_SIZE) / 2;
+    int shipY = (SCREEN_HEIGHT - UNIT_SIZE) / 2;
     int health = 3;
     boolean running = false;
     Timer timer;
@@ -49,47 +48,47 @@ public class GamePanel extends JPanel implements ActionListener {
 
             // draw spaceship
             g.setColor(Color.gray);
-            g.fillRect(x, y, UNIT_SIZE, UNIT_SIZE);
+            g.fillRect(shipX, shipY, UNIT_SIZE, UNIT_SIZE);
+
         }
     }
 
     public void move() {
         switch (offset.x) {
-            case -1: x = x - (int)(0.25 * UNIT_SIZE); break;
-            case 1: x = x + (int)(0.25 * UNIT_SIZE); break;
+            case -1: shipX = shipX - (int)(0.25 * UNIT_SIZE); break;
+            case 1: shipX = shipX + (int)(0.25 * UNIT_SIZE); break;
         }
         switch (offset.y) {
-            case 1: y = y - (int)(0.25 * UNIT_SIZE); break;
-            case -1: y = y + (int)(0.25 * UNIT_SIZE); break;
+            case 1: shipY = shipY - (int)(0.25 * UNIT_SIZE); break;
+            case -1: shipY = shipY + (int)(0.25 * UNIT_SIZE); break;
         }
 
+        // checking for diagonal movement to correct for its larger move size
         if (offset.x == 1 && offset.y == 1) {
-            y = y + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            x = x - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipX = shipX - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
         }
         if (offset.x == -1 && offset.y == -1) {
-            y = y - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            x = x + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipX = shipX + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
         }
         if (offset.x == -1 && offset.y == 1) {
-            y = y + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            x = x + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipX = shipX + (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
         }
         if (offset.x == 1 && offset.y == -1) {
-            y = y - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
-            x = x - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipY = shipY - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
+            shipX = shipX - (int)(XY_CORRECTION * 0.25 * UNIT_SIZE);
         }
     }
 
     public void aim() {
-
-        if (shoot) {
-
+        if (MouseControls.inScreen) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
         }
-    }
-
-    public void asteroids() {
-
+        else {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 
     public void checkCollisions() {
@@ -104,24 +103,32 @@ public class GamePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (running) {
             move();
-            asteroids();
             aim();
             checkCollisions();
         }
         repaint();
     }
 
-    public class lasers {
-        private final int LASER_LENGTH = UNIT_SIZE / 3;
+    public class asteroid {
 
-        int x1, x2;
-        int y1, y2;
+    }
 
-        lasers() {
+    public class laser {
+        final int LASER_SIZE = (int)(UNIT_SIZE * 0.25);
+
+        int slope;
+        int laserX;
+        int laserY;
+
+        laser() {
+            // starting laser coordinates
             if (xFire >= 0 && yFire >= 0) {
-                x1 = x + (UNIT_SIZE / 2);
-                y1 = y + (UNIT_SIZE / 2);
+                laserX = shipX + (UNIT_SIZE / 2);
+                laserY = shipY + (UNIT_SIZE / 2);
             }
+
+            // find laser slope
+            slope = (yFire - laserY) / (xFire - laserX);
 
 
 
