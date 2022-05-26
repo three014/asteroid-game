@@ -2,27 +2,27 @@ import java.awt.event.*;
 
 public class MouseControls extends MouseAdapter {
 
-    public static boolean inScreen = false;
+    public static boolean onScreen = false;
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (inScreen) {
+        if (onScreen) {
             GamePanel.xFire = e.getX();
             GamePanel.yFire = e.getY();
-            GamePanel.shoot = true;
+            GamePanel.canShoot = true;
         }
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        inScreen = true;
-        System.out.println("Mouse entered screen");
+        onScreen = true;
+        //System.out.println("Mouse entered screen");
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        inScreen = false;
-        System.out.println("Mouse exited screen");
+        onScreen = false;
+        //System.out.println("Mouse exited screen");
     }
 }
 

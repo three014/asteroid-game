@@ -18,38 +18,38 @@ public class KeyControls extends KeyAdapter {
     }
 
     private synchronized void offsetRefresh() {
-        GamePanel.offset.y = 0;
-        GamePanel.offset.x = 0;
+        GamePanel.direction.y = 0;
+        GamePanel.direction.x = 0;
 
         for (Integer pressedKey : pressedKeys) {
             switch (pressedKey) {
                 case KeyEvent.VK_W:
-                    if (GamePanel.offset.y < 1)
-                        GamePanel.offset.y += 1;
+                    if (GamePanel.direction.y < 1)
+                        GamePanel.direction.y += 1;
                     else
-                        GamePanel.offset.y = 1;
+                        GamePanel.direction.y = 1;
                     break;
                 case KeyEvent.VK_A:
-                    if (GamePanel.offset.x > -1)
-                        GamePanel.offset.x -= 1;
+                    if (GamePanel.direction.x > -1)
+                        GamePanel.direction.x -= 1;
                     else
-                        GamePanel.offset.x = -1;
+                        GamePanel.direction.x = -1;
                     break;
                 case KeyEvent.VK_S:
-                    if (GamePanel.offset.y > -1)
-                        GamePanel.offset.y -= 1;
+                    if (GamePanel.direction.y > -1)
+                        GamePanel.direction.y -= 1;
                     else
-                        GamePanel.offset.y = -1;
+                        GamePanel.direction.y = -1;
                     break;
                 case KeyEvent.VK_D:
-                    if (GamePanel.offset.x < 1)
-                        GamePanel.offset.x += 1;
+                    if (GamePanel.direction.x < 1)
+                        GamePanel.direction.x += 1;
                     else
-                        GamePanel.offset.x = 1;
+                        GamePanel.direction.x = 1;
                     break;
             }
         }
 
-        System.out.println(GamePanel.offset);
+        // System.out.println(GamePanel.direction);
     }
 }

@@ -8,12 +8,13 @@ public class GamePanel extends JPanel implements ActionListener {
     // Panel settings
     static final int SCREEN_WIDTH = 1920;
     static final int SCREEN_HEIGHT = 1080;
-    static final int UPDATES_PER_SEC = 60; // Correlates to game speed as well
+    final int UPDATES_PER_SEC = 60; // Correlates to game speed as well
     boolean running = false;
+    Timer timer;
 
     // Ship settings
     static final int SHIP_SIZE = 70;
-    static final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
+    final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
     final int MAX_LASERS = 3;
     final int LASER_SIZE = (int) (SHIP_SIZE * 0.25);
 
@@ -26,12 +27,12 @@ public class GamePanel extends JPanel implements ActionListener {
 
     static int xFire = -1;
     static int yFire = -1;
-    static boolean CanShoot = false;
-    laser[] laserGun = new laser[MAX_LASERS];
+    static boolean canShoot = false;
     int score = 0;
     // int health = 3;
-    Timer timer;
+    laser[] laserGun = new laser[MAX_LASERS];
 
+    // Asteroid settings
     final int MAX_ASTEROIDS = 10;
     int ASTEROID_FREQ = 3;
     int clock = 0;
@@ -145,7 +146,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (MouseControls.onScreen) {
             setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
-            if (CanShoot) {
+            if (canShoot) {
                 for (int i = 0; i < MAX_LASERS; i++) {
 
                     // only allows 3 lasers to be on screen at once
@@ -154,7 +155,7 @@ public class GamePanel extends JPanel implements ActionListener {
                         break;
                     }
                 }
-                CanShoot = false;
+                canShoot = false;
             }
         }
         else {
@@ -349,7 +350,7 @@ public class GamePanel extends JPanel implements ActionListener {
         laser(int X, int Y) {
 
             // see if it's okay to shoot a laser in the first place
-            if (CanShoot) {
+            if (canShoot) {
 
                 final int LASER_SPEED = SHIP_SPEED * 3;
 
@@ -386,7 +387,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     //System.out.println("(" + directionX + ", " + directionY + ")");
             }
 
-            CanShoot = false;
+            canShoot = false;
         }
 
         void moveLaser() {
