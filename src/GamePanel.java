@@ -5,26 +5,32 @@ import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener {
 
+    // Panel settings
     static final int SCREEN_WIDTH = 1920;
     static final int SCREEN_HEIGHT = 1080;
+    static final int UPDATES_PER_SEC = 60; // Correlates to game speed as well
+    boolean running = false;
+
+    // Ship settings
     static final int SHIP_SIZE = 70;
-    static final int UPDATES_PER_SEC = 60;
     static final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
-    static final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) / 2);
-    final int SHIP_SPEED = (int)(0.12 * SHIP_SIZE);
     final int MAX_LASERS = 3;
-    static final Point offset = new Point();
-    static int xFire = -1;
-    static int yFire = -1;
-    static boolean shoot = false;
+
+    static final int SHIP_SPEED = (int)(0.12 * SHIP_SIZE);
+    final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) / 2);
+    static final Point direction = new Point();
     int shipX = (SCREEN_WIDTH - SHIP_SIZE) / 2;
     int shipY = (SCREEN_HEIGHT - SHIP_SIZE) / 2;
-    // int health = 3;
-    boolean running = false;
+
+    static int xFire = -1;
+    static int yFire = -1;
+    static boolean CanShoot = false;
     laser[] laserGun = new laser[MAX_LASERS];
-    // laser l = null;
+    // int health = 3;
     Timer timer;
-    Random rand;
+
+    asteroid a;
+    static Random rand;
 
     GamePanel() {
         rand = new Random();
@@ -39,8 +45,10 @@ public class GamePanel extends JPanel implements ActionListener {
     public void startGame() {
         running = true;
         for (int i = 0; i < MAX_LASERS; i++) {
-            laserGun[i] = null;
+            laserGun[i] = null; // slightly redundant, but ensures they all start as null
         }
+        rand = new Random();
+        a = new asteroid(); // FIXME
         timer = new Timer((1000/UPDATES_PER_SEC), this);
         timer.start();
     }
@@ -54,7 +62,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (running) {
 
             // draw spaceship
-            g.setColor(Color.gray);
+            g.setColor(Color.white);
             g.fillRect(shipX, shipY, SHIP_SIZE, SHIP_SIZE);
 
 
@@ -66,13 +74,19 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
 
+            // draw asteroids
+            if (a != null) {
+                g.setColor(Color.gray);
+                g.fillOval(a.locX, a.locY, a.SIZE, a.SIZE);
+            }
+
         }
     }
 
     public void move() {
 
         // moving the spaceship part 1
-        switch (offset.x) {
+        switch (direction.x) {
             case -1:
                 shipX = shipX - SHIP_SPEED;
                 break;
@@ -80,7 +94,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 shipX = shipX + SHIP_SPEED;
                 break;
         }
-        switch (offset.y) {
+        switch (direction.y) {
             case 1:
                 shipY = shipY - SHIP_SPEED;
                 break;
@@ -92,19 +106,19 @@ public class GamePanel extends JPanel implements ActionListener {
         /* moving the spaceship part 2:
          * checking for diagonal movement to correct for its larger move size
          */
-        if (offset.x == 1 && offset.y == 1) {
+        if (direction.x == 1 && direction.y == 1) {
             shipY = shipY + (int) (XY_CORRECTION * SHIP_SPEED);
             shipX = shipX - (int) (XY_CORRECTION * SHIP_SPEED);
         }
-        if (offset.x == -1 && offset.y == -1) {
+        if (direction.x == -1 && direction.y == -1) {
             shipY = shipY - (int) (XY_CORRECTION * SHIP_SPEED);
             shipX = shipX + (int) (XY_CORRECTION * SHIP_SPEED);
         }
-        if (offset.x == -1 && offset.y == 1) {
+        if (direction.x == -1 && direction.y == 1) {
             shipY = shipY + (int) (XY_CORRECTION * SHIP_SPEED);
             shipX = shipX + (int) (XY_CORRECTION * SHIP_SPEED);
         }
-        if (offset.x == 1 && offset.y == -1) {
+        if (direction.x == 1 && direction.y == -1) {
             shipY = shipY - (int) (XY_CORRECTION * SHIP_SPEED);
             shipX = shipX - (int) (XY_CORRECTION * SHIP_SPEED);
         }
@@ -114,13 +128,18 @@ public class GamePanel extends JPanel implements ActionListener {
             if (laserGun[i] != null) { laserGun[i].moveLaser(); }
         }
 
+        // moving the asteroids
+        if (a != null) {
+            a.move();
+        }
+
     }
 
     public void aim() {
-        if (MouseControls.inScreen) {
+        if (MouseControls.onScreen) {
             setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
-            if (shoot) {
+            if (CanShoot) {
                 for (int i = 0; i < MAX_LASERS; i++) {
 
                     // only allows 3 lasers to be on screen at once
@@ -129,7 +148,7 @@ public class GamePanel extends JPanel implements ActionListener {
                         break;
                     }
                 }
-                shoot = false;
+                CanShoot = false;
             }
         }
         else {
@@ -152,6 +171,13 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         }
 
+        if (a != null) {
+            if ((a.locX >= (SCREEN_WIDTH + 400)) || (a.locX < -400)) {
+                a = null;
+            } else if ((a.locY >= (SCREEN_HEIGHT + 400)) || (a.locY < -400)) {
+                a = null;
+            }
+        }
     }
 
     public void gameOver(Graphics g) {
@@ -170,11 +196,89 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public static class asteroid {
 
+        public final int SIZE = determineSize();
+
+        public int locX, locY;
+        private int moveX, moveY;
+
+        asteroid() {
+
+            final int SPEED_CONSTANT = (int) (SHIP_SPEED * 0.75);
+            final int ASTEROID_SPEED = ((SHIP_SIZE / SIZE) * SPEED_CONSTANT);
+
+            int dirY = rand.nextInt(SCREEN_HEIGHT - 100) + 50;
+            int dirX = rand.nextInt(SCREEN_WIDTH - 100) + 50;
+            int randomFactorX = rand.nextInt(3);
+            int randomFactorY;
+            double absV;
+
+            // System.out.println("(" + dirX + ", " + dirY + ")");
+
+            switch(randomFactorX) {
+                case 0:
+                    locX = (rand.nextInt(150) * -1) - 150;
+                    randomFactorY = 2;
+                    break;
+                case 1:
+                    locX = rand.nextInt(150) + SCREEN_WIDTH;
+                    randomFactorY = 2;
+                    break;
+                case 2:
+                    locX = rand.nextInt(SCREEN_WIDTH - 100) + 50;
+                    randomFactorY = rand.nextInt(2);
+                    break;
+                default:
+                    locX = -150;
+                    randomFactorY = 0;
+            }
+            switch(randomFactorY) {
+                case 0:
+                    locY = (rand.nextInt(150) * -1) - 150;
+                    break;
+                case 1:
+                    locY = rand.nextInt(150) + SCREEN_HEIGHT;
+                    break;
+                case 2:
+                    locY = rand.nextInt(SCREEN_HEIGHT - 100) + 50;
+                    break;
+                default:
+                    locY = -150;
+            }
+
+            absV = Math.sqrt( ( ( dirX - locX ) * ( dirX - locX ) ) + ( ( dirY - locY ) * ( dirY - locY ) ) );
+
+            moveX = (int) ( ( (double) (dirX - locX ) / absV ) * ASTEROID_SPEED );
+            moveY = (int) ( ( (double) (dirY - locY ) / absV ) * ASTEROID_SPEED );
+        }
+
+        void move() {
+            locX += moveX;
+            locY += moveY;
+        }
+
+        int determineSize() {
+
+            int chance = rand.nextInt(100);
+
+            if (chance < 60) {
+                return (int) (SHIP_SIZE * 0.85);
+            }
+            else if (chance < 80) {
+                return SHIP_SIZE;
+            }
+            else if (chance < 90) {
+                return (int) (SHIP_SIZE * 0.4);
+            }
+            else {
+                return (int) (SHIP_SIZE * 1.75);
+            }
+        }
+
+
     }
 
     public static class laser {
-        final int LASER_SIZE = (int) ( SHIP_SIZE * 0.25 );
-        final int LASER_SPEED = (int) ( SHIP_SIZE * 0.3 );
+        public final int LASER_SIZE = (int) (SHIP_SIZE * 0.25);
 
         public int laserY, laserX;
         private int moveX, moveY;
@@ -182,14 +286,16 @@ public class GamePanel extends JPanel implements ActionListener {
         laser(int X, int Y) {
 
             // see if it's okay to shoot a laser in the first place
-            if (shoot) {
+            if (CanShoot) {
+
+                final int LASER_SPEED = SHIP_SPEED * 3;
 
                 int aimX, aimY;
                 double absV;
 
                 // starting laser coordinates
-                laserX = X + ( SHIP_SIZE / 2 );
-                laserY = Y + ( SHIP_SIZE / 2) ;
+                laserX = X + (SHIP_SIZE / 2);
+                laserY = Y + (SHIP_SIZE / 2) ;
                 aimX = xFire;
                 aimY = yFire;
 
@@ -217,7 +323,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     //System.out.println("(" + directionX + ", " + directionY + ")");
             }
 
-            shoot = false;
+            CanShoot = false;
         }
 
         void moveLaser() {
