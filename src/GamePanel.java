@@ -6,24 +6,24 @@ import java.util.Random;
 public class GamePanel extends JPanel implements ActionListener {
 
     // Panel settings
-    static final int SCREEN_WIDTH = 1920;
-    static final int SCREEN_HEIGHT = 1080;
+    static final int SCREEN_WIDTH = 768;
+    static final int SCREEN_HEIGHT = 480;
     final int UPDATES_PER_SEC = 60; // Correlates to game speed as well
     boolean running = false;
     Timer timer;
 
     // Ship settings
-    static final int SHIP_SIZE = 70;
+    static final int SHIP_SIZE = (int) (Math.abs(SCREEN_WIDTH - SCREEN_HEIGHT) * 0.12);
     final float DIAG_CORRECTION = 0.414214f; // ~= sqrt(2) - 1
     final int MAX_LASERS = 3;
     final int LASER_SIZE = (int) (SHIP_SIZE * 0.25);
 
-    static final int SHIP_SPEED = (int)(0.12 * SHIP_SIZE);
-    final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) / 2);
+    static final int SHIP_SPEED = (int) (0.12 * SHIP_SIZE);
+    final double XY_CORRECTION = Math.sqrt((DIAG_CORRECTION * DIAG_CORRECTION) * 0.5);
     static final Point direction = new Point();
     final int[] border = { 1, 1, 1, 1 };
-    int shipX = (SCREEN_WIDTH - SHIP_SIZE) / 2;
-    int shipY = (SCREEN_HEIGHT - SHIP_SIZE) / 2;
+    int shipX = (int) ((SCREEN_WIDTH - SHIP_SIZE) * 0.5);
+    int shipY = (int) ((SCREEN_HEIGHT - SHIP_SIZE) * 0.5);
 
     static int xFire = -1;
     static int yFire = -1;
@@ -33,8 +33,9 @@ public class GamePanel extends JPanel implements ActionListener {
     laser[] laserGun = new laser[MAX_LASERS];
 
     // Asteroid settings
-    final int MAX_ASTEROIDS = 10;
-    int ASTEROID_FREQ = 3;
+    final int MAX_ASTEROIDS = 5;
+    static final int DIRECTION_LIMIT = (int)((SCREEN_HEIGHT + SCREEN_WIDTH) * 0.25 * 0.130719);
+    int ASTEROID_FREQ = 5;
     int clock = 0;
     asteroid[] asteroids;
     static Random rand;
@@ -178,11 +179,11 @@ public class GamePanel extends JPanel implements ActionListener {
         // check laser collisions with border
         for (int i = 0; i < MAX_LASERS; i++) {
             if (laserGun[i] != null) {
-                if ((laserGun[i].laserX >= (SCREEN_WIDTH - LASER_SIZE)) || (laserGun[i].laserX < 0)) {
+                if ((laserGun[i].laserX > (SCREEN_WIDTH - LASER_SIZE)) || (laserGun[i].laserX < 0)) {
                     laserGun[i] = null;
                     break;
                 }
-                if ((laserGun[i].laserY >= (SCREEN_HEIGHT - LASER_SIZE)) || (laserGun[i].laserY < 0)) {
+                if ((laserGun[i].laserY > (SCREEN_HEIGHT - LASER_SIZE)) || (laserGun[i].laserY < 0)) {
                     laserGun[i] = null;
                     break;
                 }
@@ -282,7 +283,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     randomFactorY = 2;
                     break;
                 case 2:
-                    locX = rand.nextInt(SCREEN_WIDTH - 100) + 50;
+                    locX = rand.nextInt(SCREEN_WIDTH - DIRECTION_LIMIT * 2) + DIRECTION_LIMIT;
                     dirX = rand.nextInt(1000) - 500;
                     randomFactorY = rand.nextInt(2);
                     break;
@@ -301,7 +302,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     dirY = rand.nextInt(500) - 500;
                     break;
                 case 2:
-                    locY = rand.nextInt(SCREEN_HEIGHT - 100) + 50;
+                    locY = rand.nextInt(SCREEN_HEIGHT - DIRECTION_LIMIT * 2) + DIRECTION_LIMIT;
                     dirY = rand.nextInt(1000) - 500;
                     break;
                 default:
@@ -309,7 +310,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     dirY = 500;
             }
                 // More debugging
-                // System.out.println("(" + dirX + ", " + dirY + ")");
+                System.out.println("(" + dirX + ", " + dirY + ")");
 
             absV = Math.sqrt( Math.pow( dirX, 2.0 ) + Math.pow( dirY, 2.0 ) );
 
@@ -352,14 +353,14 @@ public class GamePanel extends JPanel implements ActionListener {
             // see if it's okay to shoot a laser in the first place
             if (canShoot) {
 
-                final int LASER_SPEED = SHIP_SPEED * 3;
+                final int LASER_SPEED = SHIP_SPEED * 2;
 
                 int aimX, aimY;
                 double absV;
 
                 // starting laser coordinates
-                laserX = X + (SHIP_SIZE / 2);
-                laserY = Y + (SHIP_SIZE / 2) ;
+                laserX = X + (int) (SHIP_SIZE * 0.5);
+                laserY = Y + (int) (SHIP_SIZE * 0.5);
                 aimX = xFire;
                 aimY = yFire;
 
