@@ -82,7 +82,8 @@ public class GamePanel extends JPanel implements ActionListener {
             for (int i = 0; i < MAX_ASTEROIDS; i++) {
                 if (asteroids[i] != null) {
                     g.setColor(Color.gray);
-                    g.fillOval((int)asteroids[i].getX(), (int)asteroids[i].getY(), (int)asteroids[i].getWidth(), (int)asteroids[i].getHeight());
+                    g.fillOval((int)asteroids[i].getX(), (int)asteroids[i].getY(), 
+                            (int)asteroids[i].getWidth(), (int)asteroids[i].getHeight());
                 }
             }
         }
