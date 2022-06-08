@@ -27,13 +27,14 @@ public class GamePanel extends JPanel implements ActionListener {
     static int yFire = -1;
     static boolean canShoot = false;
     int score = 0;
-    // int health = 3;
+    int levelFactor = 5;
+    int health = 3;
     Entities.laser[] laserGun = new Entities.laser[MAX_LASERS];
 
     // Asteroid settings
-    final int MAX_ASTEROIDS = 5;
+    final int MAX_ASTEROIDS = 10;
     static final int DIRECTION_LIMIT = (int)((SCREEN_HEIGHT + SCREEN_WIDTH) * 0.25 * 0.130719);
-    int ASTEROID_FREQ = 5;
+    int ASTEROID_FREQ = 3;
     int clock = 0;
     Entities.asteroid[] asteroids;
     static Random rand;
@@ -82,7 +83,8 @@ public class GamePanel extends JPanel implements ActionListener {
             for (int i = 0; i < MAX_ASTEROIDS; i++) {
                 if (asteroids[i] != null) {
                     g.setColor(Color.gray);
-                    g.fillOval((int)asteroids[i].getX(), (int)asteroids[i].getY(), 
+
+                    g.fillOval((int)asteroids[i].getX(), (int)asteroids[i].getY(),
                             (int)asteroids[i].getWidth(), (int)asteroids[i].getHeight());
                 }
             }
@@ -93,20 +95,12 @@ public class GamePanel extends JPanel implements ActionListener {
 
         // moving the spaceship part 1
         switch (direction.x) {
-            case -1:
-                shipX = shipX - SHIP_SPEED * border[0];
-                break;
-            case 1:
-                shipX = shipX + SHIP_SPEED * border[2];
-                break;
+            case -1 -> shipX = shipX - SHIP_SPEED * border[0];
+            case 1 -> shipX = shipX + SHIP_SPEED * border[2];
         }
         switch (direction.y) {
-            case 1:
-                shipY = shipY - SHIP_SPEED * border[1];
-                break;
-            case -1:
-                shipY = shipY + SHIP_SPEED * border[3];
-                break;
+            case 1 -> shipY = shipY - SHIP_SPEED * border[1];
+            case -1 -> shipY = shipY + SHIP_SPEED * border[3];
         }
 
         /* moving the spaceship part 2:
@@ -174,7 +168,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (shipY >= (SCREEN_HEIGHT - SHIP_SIZE)) { border[3] = 0; }
         else border[3] = 1;
 
-        // check laser collisions with border
+        // check laser collisions
         for (int i = 0; i < MAX_LASERS; i++) {
             if (laserGun[i] != null) {
                 if (((int)laserGun[i].getX() > (SCREEN_WIDTH - (int)laserGun[i].getWidth())) || ((int)laserGun[i].getX() < 0)) {
@@ -188,15 +182,34 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         }
 
-        // check asteroid collisions with border
+        // check asteroid collisions
         for (int i = 0; i < MAX_ASTEROIDS; i++) {
             if (asteroids[i] != null) {
+                for (int j = 0; j < MAX_LASERS; j++) {
+                    if (laserGun[j] != null) {
+                        if (laserGun[j].intersects(asteroids[i])) {
+                            System.out.println("\tMade asteroid " + i + " null");
+                            score++;
+                            asteroids[i] = null;
+                            laserGun[j] = null;
+                            break;
+                        }
+                    }
+                }
+                if (asteroids[i] != null) {
+                    if (asteroids[i].intersects(shipX, shipY, SHIP_SIZE, SHIP_SIZE)) {
+                        asteroids[i] = null;
+                        health--;
+                        break;
+                    }
+                }
+                else { break; }
                 if ((int)asteroids[i].getX() > (SCREEN_WIDTH + (int)asteroids[i].getWidth() * 2)) {
                     System.out.println("\t\tMade asteroid " + i + " null");
                     asteroids[i] = null;
                     break;
                 }
-                if ((int)asteroids[i].getX() < (-1 * (int)asteroids[i].getWidth() * 2)) {
+                if ((int)asteroids[i].getX() < (-1 * (int)asteroids[i].getWidth() * 3)) {
                     System.out.println("\t\tMade asteroid " + i + " null");
                     asteroids[i] = null;
                     break;
@@ -206,11 +219,12 @@ public class GamePanel extends JPanel implements ActionListener {
                     asteroids[i] = null;
                     break;
                 }
-                if ((int)asteroids[i].getY() < (-1 * (int)asteroids[i].getHeight() * 2)) {
+                if ((int)asteroids[i].getY() < (-1 * (int)asteroids[i].getHeight() * 3)) {
                     System.out.println("\t\tMade asteroid " + i + " null");
                     asteroids[i] = null;
                     break;
                 }
+
             }
         }
     }
@@ -222,20 +236,18 @@ public class GamePanel extends JPanel implements ActionListener {
             for (int i = 0; i < MAX_ASTEROIDS; i++) {
                 if (asteroids[i] == null) {
                     asteroids[i] = new Entities.asteroid();
-                        // System.out.println("Created asteroid " + i);
+                    System.out.println("Created asteroid " + i + " - Init: (" + asteroids[i].getX() + ", " + asteroids[i].getY() + ")" +
+                            " - Mvt: (" + asteroids[i].moveX + ", " + asteroids[i].moveY + ")");
                     break;
                 }
-                    // debug
-                    else {
-                        System.out.println("\t" + i + " Init: (" + asteroids[i].getX() + ", " + asteroids[i].getY() + ")" +
-                                " - Mvt: (" + asteroids[i].moveX + ", " + asteroids[i].moveY + ")");
-                    }
-
             }
         }
 
-        if (score > 10) {
-            ASTEROID_FREQ--;
+        if (score > levelFactor) {
+            if (ASTEROID_FREQ > 1) {
+                ASTEROID_FREQ--;
+                levelFactor = (int)((double)levelFactor * 1.6) + 1;
+            }
         }
     }
 

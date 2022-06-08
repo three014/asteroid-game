@@ -2,7 +2,7 @@ import java.awt.*;
 
 public class Entities {
 
-    public static class asteroid extends Rectangle{
+    public static class asteroid extends Rectangle {
 
         // public int locX, locY;
         public double moveX, moveY;
@@ -16,48 +16,50 @@ public class Entities {
             height = SIZE;
 
             int dirX, dirY;
-            int randomFactorX = GamePanel.rand.nextInt(3);
+            int randomFactorX = GamePanel.rand.nextInt(4);
             int randomFactorY;
             double absV;
 
             // determine starting location and direction
-            switch(randomFactorX) {
-                case 0:
-                    x = GamePanel.rand.nextInt(SIZE) - SIZE;
-                    dirX = GamePanel.rand.nextInt(500);
+            switch (randomFactorX) {
+                case 0 -> {
+                    x = GamePanel.rand.nextInt(SIZE) - SIZE - SIZE;
+                    dirX = 200 + GamePanel.rand.nextInt(300);
                     randomFactorY = 2;
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     x = GamePanel.rand.nextInt(SIZE) + GamePanel.SCREEN_WIDTH;
-                    dirX = GamePanel.rand.nextInt(500) - 500;
+                    dirX = -500 + GamePanel.rand.nextInt(300);
                     randomFactorY = 2;
-                    break;
-                case 2:
+                }
+                case 2, 3 -> {
                     x = GamePanel.rand.nextInt(GamePanel.SCREEN_WIDTH - GamePanel.DIRECTION_LIMIT * 2) + GamePanel.DIRECTION_LIMIT;
-                    dirX = GamePanel.rand.nextInt(1000) - 500;
+                    dirX = -400 + GamePanel.rand.nextInt(800);
                     randomFactorY = GamePanel.rand.nextInt(2);
-                    break;
-                default:
+                }
+                default -> {
                     x = -SIZE;
                     dirX = 500;
                     randomFactorY = 0;
+                }
             }
-            switch(randomFactorY) {
-                case 0:
-                    y = GamePanel.rand.nextInt(SIZE) - SIZE;
-                    dirY = GamePanel.rand.nextInt(500);
-                    break;
-                case 1:
+            switch (randomFactorY) {
+                case 0 -> {
+                    y = GamePanel.rand.nextInt(SIZE) - SIZE - SIZE;
+                    dirY = 200 + GamePanel.rand.nextInt(300);
+                }
+                case 1 -> {
                     y = GamePanel.rand.nextInt(SIZE) + GamePanel.SCREEN_HEIGHT;
-                    dirY = GamePanel.rand.nextInt(500) - 500;
-                    break;
-                case 2:
+                    dirY = -500 + GamePanel.rand.nextInt(300);
+                }
+                case 2 -> {
                     y = GamePanel.rand.nextInt(GamePanel.SCREEN_HEIGHT - GamePanel.DIRECTION_LIMIT * 2) + GamePanel.DIRECTION_LIMIT;
-                    dirY = GamePanel.rand.nextInt(1000) - 500;
-                    break;
-                default:
+                    dirY = -400 + GamePanel.rand.nextInt(800);
+                }
+                default -> {
                     y = -SIZE;
                     dirY = 500;
+                }
             }
             // More debugging
             System.out.println("(" + dirX + ", " + dirY + ")");
@@ -93,7 +95,7 @@ public class Entities {
         }
     }
 
-    public static class laser extends Rectangle{
+    public static class laser extends Rectangle {
 
         //public int laserY, laserX;
         private final int moveX, moveY;
