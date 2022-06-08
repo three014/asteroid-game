@@ -2,7 +2,7 @@ import java.awt.*;
 
 public class Entities {
 
-    public static class asteroid extends Rectangle{
+    public static class asteroid extends Rectangle {
 
         // public int locX, locY;
         public double moveX, moveY;
@@ -95,7 +95,7 @@ public class Entities {
         }
     }
 
-    public static class laser extends Rectangle{
+    public static class laser extends Rectangle {
 
         //public int laserY, laserX;
         private final int moveX, moveY;
